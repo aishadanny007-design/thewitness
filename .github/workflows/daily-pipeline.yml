@@ -114,8 +114,9 @@ jobs:
         git config --local user.name "GitHub Action"
         git add diary/ sources/ public/
         git diff --staged --quiet || git commit -m "Auto-generate entry for ${{ steps.date.outputs.date }}"
-        # Use PAT for push (GITHUB_TOKEN may not have push permissions)
-        git push https://${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
+        # Use PAT for push (embed token in remote URL)
+        git remote set-url origin https://${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
+        git push origin main
       env:
         PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
     
