@@ -1,5 +1,9 @@
 name: The Witness - Daily Pipeline
 
+# Force Node.js 24 to avoid deprecation warnings
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   # Run daily at 23:00 PKT (18:00 UTC)
   schedule:
