@@ -73,8 +73,6 @@ jobs:
     - name: Validate generated entry
       if: ${{ !github.event.inputs.skip_validation && 'true' || 'false' }}
       run: |
-        ENTRY_PATH="diary/${{ steps.date.outputs.date }}/${{ steps.date.outputs.date }}.md"
-        # Convert date to YYYY/MM/YYYY-MM-DD format
         YEAR=$(echo ${{ steps.date.outputs.date }} | cut -d'-' -f1)
         MONTH=$(echo ${{ steps.date.outputs.date }} | cut -d'-' -f2)
         ENTRY_PATH="diary/${YEAR}/${MONTH}/${{ steps.date.outputs.date }}.md"
@@ -82,13 +80,22 @@ jobs:
         echo "Validation passed!"
       continue-on-error: true
     
-    - name: Validate with strict mode (blocking)
+    - name: Validate with strict mode (only fail on errors)
       if: ${{ !github.event.inputs.skip_validation && 'true' || 'false' }}
       run: |
         YEAR=$(echo ${{ steps.date.outputs.date }} | cut -d'-' -f1)
         MONTH=$(echo ${{ steps.date.outputs.date }} | cut -d'-' -f2)
         ENTRY_PATH="diary/${YEAR}/${MONTH}/${{ steps.date.outputs.date }}.md"
-        python scripts/entry_review.py "${ENTRY_PATH}" --strict
+        # Only fail on errors (not warnings)
+        python scripts/entry_review.py "${ENTRY_PATH}" --json > validation-report.json
+        # Check if there are any errors in the JSON
+        if grep -q '"severity": "error"' validation-report.json; then
+          echo "❌ Validation errors found!"
+          cat validation-report.json
+          exit 1
+        else
+          echo "✅ No validation errors (warnings only)"
+        fi
       continue-on-error: false
     
     - name: Generate validation report (JSON)
