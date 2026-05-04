@@ -39,7 +39,9 @@ def main() -> int:
     # Run validation after generation
     if not args.skip_validation:
         print("\n🔍 Running validation...")
-        entry_path = ROOT / "diary" / args.date.replace("-", "/")[:7] / f"{args.date}.md"
+        # Construct path: diary/YYYY/MM/YYYY-MM-DD.md
+        date_parts = args.date.split("-")
+        entry_path = ROOT / "diary" / date_parts[0] / date_parts[1] / f"{args.date}.md"
         
         if not entry_path.exists():
             print(f"⚠️  Entry not found: {entry_path}", file=sys.stderr)
