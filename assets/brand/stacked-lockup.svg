@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+<circle cx="150" cy="50" r="30" fill="#141414"/>
+<text x="50" y="120" font-family="serif" font-size="36" fill="#141414">The Witness</text>
+<text x="60" y="160" font-family="serif" font-size="16" fill="#555">Before it became history.</text>
+</svg>

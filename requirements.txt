@@ -1,0 +1,25 @@
+# The Witness - Python Dependencies
+
+# Core dependencies (minimal)
+# Add packages as needed for your specific setup
+
+# For RSS/Atom feed collection (if using collect_sources.py)
+requests>=2.31.0
+feedparser>=6.0.0
+
+# For API calls (OpenAI, Gemini)
+openai>=1.0.0
+google-generativeai>=0.3.0
+
+# For date/time handling
+pytz>=2023.3
+
+# For .env file support
+python-dotenv>=1.0.0
+
+# Optional: For better CLI output
+colorama>=0.4.6
+
+# Optional: For testing
+# pytest>=7.0.0
+# pytest-cov>=4.0.0

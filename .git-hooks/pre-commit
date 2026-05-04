@@ -1,0 +1,49 @@
+#!/bin/bash
+# Pre-commit hook for The Witness
+# Validates diary entries before they can be committed
+
+echo "🔍 Running The Witness validation..."
+
+# Get list of staged diary entries
+STAGED_ENTRIES=$(git diff --cached --name-only --diff-filter=ACM | grep -E "diary/[0-9]{4}/[0-9]{2}/[0-9]{4}-[0-9]{2}-[0-9]{2}\.md$" || true)
+
+if [ -z "$STAGED_ENTRIES" ]; then
+    echo "✓ No diary entries staged for commit."
+    exit 0
+fi
+
+VALIDATION_FAILED=0
+
+for entry in $STAGED_ENTRIES; do
+    echo ""
+    echo "📋 Validating: $entry"
+    
+    # Run validation
+    OUTPUT=$(python3 scripts/entry_review.py "$entry" 2>&1)
+    EXIT_CODE=$?
+    
+    # Show output
+    echo "$OUTPUT"
+    
+    # Check for errors (not just warnings)
+    if echo "$OUTPUT" | grep -q "ERRORS ("; then
+        echo "❌ Validation FAILED for $entry (has errors)"
+        VALIDATION_FAILED=1
+    elif [ $EXIT_CODE -ne 0 ]; then
+        echo "❌ Validation FAILED for $entry (exit code: $EXIT_CODE)"
+        VALIDATION_FAILED=1
+    else
+        echo "✓ Validation passed for $entry"
+    fi
+done
+
+if [ $VALIDATION_FAILED -ne 0 ]; then
+    echo ""
+    echo "❌ Commit blocked: Some entries have validation errors."
+    echo "   Fix the errors or use 'git commit --no-verify' to skip validation."
+    exit 1
+fi
+
+echo ""
+echo "✅ All staged entries passed validation!"
+exit 0
