@@ -4,6 +4,11 @@ name: The Witness - Daily Pipeline
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+# Grant permissions for pushing to the repository
+permissions:
+  contents: write
+  pull-requests: write
+
 on:
   # Run daily at 23:00 PKT (18:00 UTC)
   schedule:
@@ -114,8 +119,8 @@ jobs:
         git config --local user.name "GitHub Action"
         git add diary/ sources/ public/
         git diff --staged --quiet || git commit -m "Auto-generate entry for ${{ steps.date.outputs.date }}"
-        # Use PAT for push (embed token in remote URL)
-        git remote set-url origin https://${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
+        # Use PAT for push
+        git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
         git push origin main
       env:
         PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
