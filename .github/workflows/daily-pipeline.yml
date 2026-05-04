@@ -73,20 +73,31 @@ jobs:
     - name: Validate generated entry
       if: ${{ !github.event.inputs.skip_validation && 'true' || 'false' }}
       run: |
-        python scripts/entry_review.py diary/${{ steps.date.outputs.date }}/${{ steps.date.outputs.date }}.md
+        ENTRY_PATH="diary/${{ steps.date.outputs.date }}/${{ steps.date.outputs.date }}.md"
+        # Convert date to YYYY/MM/YYYY-MM-DD format
+        YEAR=$(echo ${{ steps.date.outputs.date }} | cut -d'-' -f1)
+        MONTH=$(echo ${{ steps.date.outputs.date }} | cut -d'-' -f2)
+        ENTRY_PATH="diary/${YEAR}/${MONTH}/${{ steps.date.outputs.date }}.md"
+        python scripts/entry_review.py "${ENTRY_PATH}"
         echo "Validation passed!"
       continue-on-error: true
     
     - name: Validate with strict mode (blocking)
       if: ${{ !github.event.inputs.skip_validation && 'true' || 'false' }}
       run: |
-        python scripts/entry_review.py diary/${{ steps.date.outputs.date }}/${{ steps.date.outputs.date }}.md --strict
+        YEAR=$(echo ${{ steps.date.outputs.date }} | cut -d'-' -f1)
+        MONTH=$(echo ${{ steps.date.outputs.date }} | cut -d'-' -f2)
+        ENTRY_PATH="diary/${YEAR}/${MONTH}/${{ steps.date.outputs.date }}.md"
+        python scripts/entry_review.py "${ENTRY_PATH}" --strict
       continue-on-error: false
     
     - name: Generate validation report (JSON)
       if: always()
       run: |
-        python scripts/entry_review.py diary/${{ steps.date.outputs.date }}/${{ steps.date.outputs.date }}.md --json > validation-report.json || true
+        YEAR=$(echo ${{ steps.date.outputs.date }} | cut -d'-' -f1)
+        MONTH=$(echo ${{ steps.date.outputs.date }} | cut -d'-' -f2)
+        ENTRY_PATH="diary/${YEAR}/${MONTH}/${{ steps.date.outputs.date }}.md"
+        python scripts/entry_review.py "${ENTRY_PATH}" --json > validation-report.json || true
         cat validation-report.json
     
     - name: Commit and push changes
