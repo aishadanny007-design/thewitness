@@ -86,12 +86,12 @@ jobs:
         YEAR=$(echo ${{ steps.date.outputs.date }} | cut -d'-' -f1)
         MONTH=$(echo ${{ steps.date.outputs.date }} | cut -d'-' -f2)
         ENTRY_PATH="diary/${YEAR}/${MONTH}/${{ steps.date.outputs.date }}.md"
-        # Only fail on errors (not warnings)
-        python scripts/entry_review.py "${ENTRY_PATH}" --json > validation-report.json
-        # Check if there are any errors in the JSON
-        if grep -q '"severity": "error"' validation-report.json; then
+        # Run validation and capture output
+        python scripts/entry_review.py "${ENTRY_PATH}" 2>&1 | tee validation-output.txt
+        # Check if there are any ERRORS (not warnings)
+        if grep -q "ERRORS (" validation-output.txt; then
           echo "❌ Validation errors found!"
-          cat validation-report.json
+          cat validation-output.txt
           exit 1
         else
           echo "✅ No validation errors (warnings only)"

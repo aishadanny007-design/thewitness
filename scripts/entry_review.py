@@ -8,6 +8,7 @@ Can be integrated into CI/CD or used manually for editorial review.
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -18,7 +19,7 @@ from style_validator import (
 )
 
 
-def review_entry(entry_path: Path, strict: bool = False) -> tuple[bool, str]:
+def review_entry(entry_path: Path, strict: bool = False) -> tuple[bool, str, list]:
     """
     Review a diary entry for quality and consistency.
     
@@ -27,10 +28,10 @@ def review_entry(entry_path: Path, strict: bool = False) -> tuple[bool, str]:
         strict: If True, treat warnings as failures
     
     Returns:
-        (is_valid, report_text)
+        (is_valid, report_text, issues_list)
     """
     if not entry_path.exists():
-        return False, f"Error: File not found: {entry_path}"
+        return False, f"Error: File not found: {entry_path}", []
     
     entry_text = entry_path.read_text(encoding="utf-8")
     validator = StyleValidator(entry_text)
@@ -46,7 +47,7 @@ def review_entry(entry_path: Path, strict: bool = False) -> tuple[bool, str]:
         is_valid = False
     
     report = validator.report(issues, verbose=True)
-    return is_valid, report
+    return is_valid, report, issues
 
 
 def review_batch(directory: Path, pattern: str = "*.md") -> dict[str, tuple[bool, str]]:
@@ -84,6 +85,11 @@ def main() -> int:
         action="store_true",
         help="Show only summary, not detailed report"
     )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output validation results as JSON"
+    )
     
     args = parser.parse_args()
     
@@ -106,8 +112,28 @@ def main() -> int:
         return 0 if passed == total else 1
     
     else:
-        is_valid, report = review_entry(args.path, strict=args.strict)
-        print(report)
+        is_valid, report, issues = review_entry(args.path, strict=args.strict)
+        
+        if args.json:
+            # Output JSON format
+            output = {
+                "file": str(args.path),
+                "valid": is_valid,
+                "issues": [
+                    {
+                        "severity": i.severity.value,
+                        "code": i.code,
+                        "message": i.message,
+                        "section": i.section,
+                        "line": i.line_number,
+                    }
+                    for i in issues
+                ],
+            }
+            print(json.dumps(output, indent=2))
+        else:
+            print(report)
+        
         return 0 if is_valid else 1
 
 
