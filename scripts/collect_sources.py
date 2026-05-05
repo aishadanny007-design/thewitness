@@ -176,6 +176,20 @@ def collect(config: dict[str, Any], date: str, timeout: float) -> dict[str, Any]
     per_feed = int(limits.get("per_feed", 8))
     total_sources = int(limits.get("total_sources", 60))
     summary_chars = int(limits.get("summary_chars", 360))
+    
+    # Load category allocation targets to prevent Western bias
+    source_allocation = config.get("source_allocation", {
+        "global_news": 18,
+        "regional_asia": 12,
+        "regional_africa": 8,
+        "regional_latam": 8,
+        "regional_middle_east": 6,
+        "ai_tech": 10,
+        "internet_culture": 8,
+        "local_vantage": 10,
+        "economy_climate": 6
+    })
+    
     accessed_at = utc_now()
     all_sources: list[dict[str, Any]] = []
     errors: list[dict[str, str]] = []
@@ -193,8 +207,34 @@ def collect(config: dict[str, Any], date: str, timeout: float) -> dict[str, Any]
     for source in all_sources:
         deduped.setdefault(source["id"], source)
 
-    sources = sorted(
+    # Apply weighted selection to balance categories and meet allocation targets
+    # This prevents tech-Western bias by ensuring Global South and regional voices are included
+    all_sources_list = sorted(
         deduped.values(),
+        key=lambda s: (s.get("published_at") or "", s.get("publisher") or "", s.get("title") or ""),
+        reverse=True,
+    )
+    
+    # Allocate sources by category to meet targets
+    selected_by_category: dict[str, list[dict[str, Any]]] = {}
+    for category in source_allocation:
+        selected_by_category[category] = []
+    
+    # First pass: prioritize underrepresented categories
+    for source in all_sources_list:
+        category = source.get("category", "other")
+        target = source_allocation.get(category, 5)
+        
+        if len(selected_by_category.get(category, [])) < target:
+            selected_by_category.setdefault(category, []).append(source)
+    
+    # Flatten and sort by recency, respecting allocation limits
+    sources = []
+    for category, target in source_allocation.items():
+        sources.extend(selected_by_category.get(category, [])[:target])
+    
+    sources = sorted(
+        sources,
         key=lambda s: (s.get("published_at") or "", s.get("publisher") or "", s.get("title") or ""),
         reverse=True,
     )[:total_sources]

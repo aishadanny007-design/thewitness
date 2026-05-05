@@ -12,6 +12,7 @@ import json
 import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.request
 from datetime import datetime
@@ -37,6 +38,62 @@ REQUIRED_SECTIONS = [
     "Note to the future",
     "Sources",
 ]
+
+# Retry configuration
+MAX_RETRIES = 3
+INITIAL_RETRY_DELAY = 2.0  # seconds
+MAX_RETRY_DELAY = 60.0     # seconds
+
+
+def retry_with_backoff(func, max_retries=MAX_RETRIES, initial_delay=INITIAL_RETRY_DELAY):
+    """
+    Retry a function with exponential backoff.
+    Handles rate limits, timeouts, and temporary API failures.
+    
+    Args:
+        func: Callable that takes no arguments
+        max_retries: Maximum number of retry attempts
+        initial_delay: Initial delay in seconds (doubles each retry)
+    
+    Returns:
+        Result of func() if successful
+        
+    Raises:
+        RuntimeError: If all retries fail or on permanent errors (4xx except 429)
+    """
+    delay = initial_delay
+    last_error = None
+    
+    for attempt in range(max_retries + 1):
+        try:
+            return func()
+        except urllib.error.HTTPError as exc:
+            # 429 (Too Many Requests) and 503 (Service Unavailable) are retryable
+            if exc.code in (429, 503, 500, 502, 504):
+                last_error = exc
+                if attempt < max_retries:
+                    print(f"⚠️  HTTP {exc.code} (retryable). Waiting {delay}s before retry {attempt + 1}/{max_retries}...", file=sys.stderr)
+                    time.sleep(delay)
+                    delay = min(delay * 2, MAX_RETRY_DELAY)
+                    continue
+                else:
+                    raise RuntimeError(f"API request failed after {max_retries} retries (HTTP {exc.code}): {exc}") from exc
+            else:
+                # 4xx errors (except 429) are not retryable
+                body = exc.read().decode("utf-8", errors="replace")[:2000]
+                raise RuntimeError(f"API request failed (HTTP {exc.code}, not retryable): {body}") from exc
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
+            # Network errors are retryable
+            last_error = exc
+            if attempt < max_retries:
+                print(f"⚠️  Network error: {exc}. Waiting {delay}s before retry {attempt + 1}/{max_retries}...", file=sys.stderr)
+                time.sleep(delay)
+                delay = min(delay * 2, MAX_RETRY_DELAY)
+                continue
+            else:
+                raise RuntimeError(f"API request failed after {max_retries} retries (network error): {exc}") from exc
+    
+    raise RuntimeError(f"API request failed: {last_error}")
 
 
 def source_path(date: str) -> Path:
@@ -128,6 +185,7 @@ def render_review_prompt(date: str, source_notes: str, draft_entry: str) -> str:
 
 
 def call_gemini(prompt: str, model: str, api_key: str, max_output_tokens: int) -> str:
+    """Call Gemini API with exponential backoff retry on rate limits/failures."""
     payload = {
         "systemInstruction": {
             "parts": [
@@ -151,24 +209,23 @@ def call_gemini(prompt: str, model: str, api_key: str, max_output_tokens: int) -
             "maxOutputTokens": max_output_tokens,
         },
     }
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        GEMINI_URL_TEMPLATE.format(model=model),
-        data=data,
-        method="POST",
-        headers={
-            "x-goog-api-key": api_key,
-            "Content-Type": "application/json",
-        },
-    )
-    try:
+    
+    def make_request():
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            GEMINI_URL_TEMPLATE.format(model=model),
+            data=data,
+            method="POST",
+            headers={
+                "x-goog-api-key": api_key,
+                "Content-Type": "application/json",
+            },
+        )
         with urllib.request.urlopen(req, timeout=120) as resp:
-            response = json.loads(resp.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        body = exc.read().decode("utf-8", errors="replace")[:2000]
-        raise RuntimeError(f"Gemini API request failed: HTTP {exc.code}: {body}") from exc
-    except urllib.error.URLError as exc:
-        raise RuntimeError(f"Gemini API request failed: {exc}") from exc
+            return json.loads(resp.read().decode("utf-8"))
+    
+    # Retry with exponential backoff for transient failures
+    response = retry_with_backoff(make_request, max_retries=MAX_RETRIES)
 
     chunks: list[str] = []
     for candidate in response.get("candidates", []):
@@ -187,6 +244,7 @@ def call_gemini(prompt: str, model: str, api_key: str, max_output_tokens: int) -
 
 
 def call_openai(prompt: str, model: str, api_key: str, max_output_tokens: int) -> str:
+    """Call OpenAI API with exponential backoff retry on rate limits/failures."""
     payload = {
         "model": model,
         "instructions": (
@@ -197,24 +255,23 @@ def call_openai(prompt: str, model: str, api_key: str, max_output_tokens: int) -
         "max_output_tokens": max_output_tokens,
         "text": {"format": {"type": "text"}},
     }
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        OPENAI_URL,
-        data=data,
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        },
-    )
-    try:
+    
+    def make_request():
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            OPENAI_URL,
+            data=data,
+            method="POST",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+        )
         with urllib.request.urlopen(req, timeout=120) as resp:
-            response = json.loads(resp.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        body = exc.read().decode("utf-8", errors="replace")[:2000]
-        raise RuntimeError(f"OpenAI API request failed: HTTP {exc.code}: {body}") from exc
-    except urllib.error.URLError as exc:
-        raise RuntimeError(f"OpenAI API request failed: {exc}") from exc
+            return json.loads(resp.read().decode("utf-8"))
+    
+    # Retry with exponential backoff for transient failures
+    response = retry_with_backoff(make_request, max_retries=MAX_RETRIES)
 
     text = response.get("output_text")
     if isinstance(text, str) and text.strip():
@@ -229,7 +286,6 @@ def call_openai(prompt: str, model: str, api_key: str, max_output_tokens: int) -
     if chunks:
         return "\n".join(chunks).strip() + "\n"
     raise RuntimeError("OpenAI response did not contain output text")
-
 
 def local_draft(date: str, doc: dict[str, Any], max_sources: int) -> str:
     sources = select_sources(doc.get("sources", []), max_sources)

@@ -82,7 +82,19 @@ Keep this short. Mention only the few events needed to ground the entry. Then ex
 
 ### The internet today
 
-Do not merely list trending items. Explain what the internet’s conversations reveal about attention, humor, anxiety, taste, work, fandom, distrust, or boredom. Preserve one or two details that would feel period-specific.
+Do not merely list trending items. Explain what the internet's conversations reveal about attention, humor, anxiety, taste, work, fandom, distrust, or boredom. Preserve one or two details that would feel period-specific.
+
+#### Vibe Check (Internal guidance for authentic tone)
+
+Before finalizing this section, examine source metadata for:
+
+- **Linguistic shifts**: New words, slang, or phrases entering common use (e.g., "mid," "W," "no cap," regional variations)
+- **Humor patterns**: Memes often distill cultural anxieties. List the themes or absurdities being laughed at, not individual jokes
+- **Fandom/subcultural signals**: What communities are coalescing or fracturing? What niche subcultures are entering mainstream visibility?
+- **Genuine confusion**: Where are people disagreeing on what something means? Where is the internet talking past itself?
+- **Emerging fears or hopes**: What are people joking about anxiously? What are they collectively grieving, celebrating, or skeptical of?
+
+Do not interpret humor literally or explain jokes. Instead, note what the joke was about and what its prevalence reveals. Example: "People joked extensively about AI replacing X, which suggests anxiety about displacement was reaching satire-level acceptance."
 
 ### The AI age
 

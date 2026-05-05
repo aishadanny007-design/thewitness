@@ -3,18 +3,31 @@
     "name": "The Witness",
     "tagline": "Before it became history.",
     "timezone": "Asia/Karachi",
-    "local_vantage": "subtle; do not overfocus on location"
+    "local_vantage": "subtle; do not overfocus on location",
+    "editorial_mandate": "Maintain non-Western vantage point. Prevent US-centric tech feed bias. Weight regional and Global South voices equally with Western sources."
   },
   "limits": {
     "per_feed": 8,
-    "total_sources": 60,
+    "total_sources": 70,
     "summary_chars": 360
+  },
+  "source_allocation": {
+    "global_news": 18,
+    "regional_asia": 12,
+    "regional_africa": 8,
+    "regional_latam": 8,
+    "regional_middle_east": 6,
+    "ai_tech": 10,
+    "internet_culture": 8,
+    "local_vantage": 10,
+    "economy_climate": 6
   },
   "feeds": [
     {
       "name": "Al Jazeera",
       "url": "https://www.aljazeera.com/xml/rss/all.xml",
-      "category": "global_news"
+      "category": "global_news",
+      "weight": 2
     },
     {
       "name": "The Guardian World",
@@ -24,6 +37,16 @@
     {
       "name": "BBC World",
       "url": "https://feeds.bbci.co.uk/news/world/rss.xml",
+      "category": "global_news"
+    },
+    {
+      "name": "Reuters World",
+      "url": "https://feeds.reuters.com/reuters/worldnews",
+      "category": "global_news"
+    },
+    {
+      "name": "AFP News",
+      "url": "https://feeds.afp.com/afp/latest",
       "category": "global_news"
     },
     {
@@ -39,6 +62,12 @@
     {
       "name": "OpenAI News",
       "url": "https://openai.com/news/rss.xml",
+      "category": "ai_tech",
+      "weight": 1.5
+    },
+    {
+      "name": "Google AI Updates",
+      "url": "https://ai.google/static/documents/google-ai-blog-rss.xml",
       "category": "ai_tech"
     },
     {
@@ -47,19 +76,107 @@
       "category": "internet_culture"
     },
     {
-      "name": "Google Trends Daily",
+      "name": "Google Trends Daily (US)",
       "url": "https://trends.google.com/trending/rss?geo=US",
       "category": "internet_culture"
     },
     {
-      "name": "Dawn",
+      "name": "Google Trends Daily (India)",
+      "url": "https://trends.google.com/trending/rss?geo=IN",
+      "category": "internet_culture"
+    },
+    {
+      "name": "Google Trends Daily (Brazil)",
+      "url": "https://trends.google.com/trending/rss?geo=BR",
+      "category": "internet_culture"
+    },
+    {
+      "name": "Dawn (Pakistan)",
       "url": "https://www.dawn.com/feeds/home",
+      "category": "local_vantage",
+      "weight": 2
+    },
+    {
+      "name": "Business Recorder (Pakistan)",
+      "url": "https://www.brecorder.com/feeds/latest-news",
       "category": "local_vantage"
     },
     {
-      "name": "Business Recorder",
-      "url": "https://www.brecorder.com/feeds/latest-news",
-      "category": "local_vantage"
+      "name": "The Hindu (India)",
+      "url": "https://www.thehindu.com/news/feats/rss/",
+      "category": "regional_asia",
+      "weight": 1.5
+    },
+    {
+      "name": "Nikkei Asia",
+      "url": "https://feeds.nikkei.com/nikkeiasia/news/rss2",
+      "category": "regional_asia"
+    },
+    {
+      "name": "Channel News Asia",
+      "url": "https://www.channelnewsasia.com/cna_rss_world_latest_10.xml",
+      "category": "regional_asia"
+    },
+    {
+      "name": "Straits Times (Singapore)",
+      "url": "https://feeds.straitstimes.com/st/world",
+      "category": "regional_asia"
+    },
+    {
+      "name": "BBC Africa",
+      "url": "https://feeds.bbci.co.uk/news/africa/rss.xml",
+      "category": "regional_africa",
+      "weight": 1.5
+    },
+    {
+      "name": "RFI Africa",
+      "url": "https://www.rfi.fr/en/africa/rss",
+      "category": "regional_africa"
+    },
+    {
+      "name": "News24 (South Africa)",
+      "url": "https://feeds.news24.com/articles/news24/news/rss",
+      "category": "regional_africa"
+    },
+    {
+      "name": "Africa News",
+      "url": "https://feeds.africanews.com/live-newsfeed.xml",
+      "category": "regional_africa"
+    },
+    {
+      "name": "BBC Latin America",
+      "url": "https://feeds.bbci.co.uk/news/world/americas/rss.xml",
+      "category": "regional_latam"
+    },
+    {
+      "name": "infobae (Latin America)",
+      "url": "https://feeds.infobae.com/america-latina",
+      "category": "regional_latam"
+    },
+    {
+      "name": "G1 Globo (Brazil)",
+      "url": "https://feeds.globo.com/g1/world/feed.xml",
+      "category": "regional_latam"
+    },
+    {
+      "name": "France24 Middle East",
+      "url": "https://www.france24.com/en/middle-east/rss",
+      "category": "regional_middle_east"
+    },
+    {
+      "name": "The Arab News",
+      "url": "https://www.arabnews.com/rss-feeds/latest-news",
+      "category": "regional_middle_east"
+    },
+    {
+      "name": "BBC Climate & Environment",
+      "url": "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
+      "category": "economy_climate"
+    },
+    {
+      "name": "Financial Times Markets",
+      "url": "https://feeds.ft.com/markets",
+      "category": "economy_climate"
     }
   ]
 }
