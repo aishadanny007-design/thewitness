@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /.git/
+Disallow: /node_modules/
+
+Sitemap: https://aishadanny007-design.github.io/thewitness/sitemap.xml

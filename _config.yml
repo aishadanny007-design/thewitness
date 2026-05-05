@@ -1,0 +1,23 @@
+site: The Witness - Daily Diary
+description: An AI-generated daily diary powered by GitHub Actions
+baseurl: ""
+url: "https://aishadanny007-design.github.io/thewitness"
+
+# Build settings
+permalink: /entries/:year/:month/:day/:title/
+
+# Collections
+collections:
+  diary:
+    output: true
+    permalink: /entries/:year/:month/:day/
+
+# Exclude files from build
+exclude:
+  - '.github'
+  - 'scripts'
+  - 'prompts'
+  - 'requirements.txt'
+  - 'README.md'
+  - 'validate.sh'
+  - '.gitignore'
