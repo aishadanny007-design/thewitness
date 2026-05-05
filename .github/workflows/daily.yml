@@ -36,6 +36,11 @@ jobs:
           else
             python scripts/run_daily.py --force
           fi
+      
+      - name: Rebuild frontend assets
+        run: |
+          python scripts/build_frontend.py
+      
       - name: Commit generated entry
         run: |
           if git diff --quiet; then
@@ -44,6 +49,6 @@ jobs:
           fi
           git config user.name "the-witness-bot"
           git config user.email "the-witness-bot@users.noreply.github.com"
-          git add diary sources
+          git add diary sources public
           git commit -m "Add daily diary entry"
           git push
