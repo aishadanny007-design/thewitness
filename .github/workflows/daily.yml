@@ -39,16 +39,20 @@ jobs:
       
       - name: Rebuild frontend assets
         run: |
-          python scripts/build_frontend.py
+          python3 scripts/build_frontend.py
+          echo "✅ Frontend rebuilt"
       
       - name: Commit generated entry
         run: |
-          if git diff --quiet; then
-            echo "No changes to commit"
-            exit 0
-          fi
           git config user.name "the-witness-bot"
           git config user.email "the-witness-bot@users.noreply.github.com"
-          git add diary sources public
-          git commit -m "Add daily diary entry"
-          git push
+          
+          # Check if there are any changes (diary, sources, or public)
+          if ! git diff --quiet HEAD -- diary sources public; then
+            git add diary sources public
+            git commit -m "Add daily diary entry"
+            git push
+            echo "✅ Changes pushed to GitHub"
+          else
+            echo "ℹ️  No changes to commit"
+          fi
