@@ -33,10 +33,14 @@ def extract_date(path: Path) -> str:
     return path.stem
 
 
-def inline_markdown(text: str) -> str:
+def inline_markdown(text: str, hide_citations: bool = False) -> str:
     escaped = html.escape(text)
     escaped = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)
     escaped = re.sub(r"\*(.+?)\*", r"<em>\1</em>", escaped)
+    
+    # Hide citation numbers [1, 5, 36] style if requested (for prose readability)
+    if hide_citations:
+        escaped = re.sub(r'\s*\[\d+(?:,\s*\d+)*\]', '', escaped)
 
     def repl(match: re.Match[str]) -> str:
         label = html.escape(match.group(1))
@@ -54,13 +58,15 @@ def markdown_to_html(markdown: str) -> str:
     def flush_paragraph() -> None:
         nonlocal paragraph
         if paragraph:
-            blocks.append(f"<p>{inline_markdown(' '.join(paragraph))}</p>")
+            # Hide citation numbers in prose for better readability
+            blocks.append(f"<p>{inline_markdown(' '.join(paragraph), hide_citations=True)}</p>")
             paragraph = []
 
     def flush_list() -> None:
         nonlocal list_items
         if list_items:
-            blocks.append("<ul>" + "".join(f"<li>{inline_markdown(item)}</li>" for item in list_items) + "</ul>")
+            # Hide citations in list items too
+            blocks.append("<ul>" + "".join(f"<li>{inline_markdown(item, hide_citations=True)}</li>" for item in list_items) + "</ul>")
             list_items = []
 
     for raw_line in markdown.splitlines():
@@ -111,19 +117,11 @@ def markdown_to_html(markdown: str) -> str:
     
     # Post-process: Convert source lists to styled source grid
     result = "\n".join(rendered)
-    result = result.replace(
-        '<section class="sources-section"><h3>Sources</h3>',
-        '<section class="sources-section"><h3>Sources</h3><div class="sources-grid">'
-    )
-    # Replace closing </section> for sources with special closing
-    result = result.replace(
-        '</section>\n<section',
-        '</div>\n</section>\n<section'
-    )
-    result = result.replace(
-        '</section>\n</section>',
-        '</div>\n</section>'
-    )
+    
+    # Wrap sources section list in grid div
+    sources_pattern = r'(<section class="sources-section"><h3>Sources</h3>)\n(<ul>.*?</ul>)\n(</section>)'
+    sources_replacement = r'\1\n<div class="sources-grid">\n\2\n</div>\n\3'
+    result = re.sub(sources_pattern, sources_replacement, result, flags=re.DOTALL)
     
     return result
 
