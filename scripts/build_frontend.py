@@ -78,7 +78,12 @@ def markdown_to_html(markdown: str) -> str:
             if level == 1:
                 blocks.append(f'<header class="entry-header"><p class="entry-kicker">Latest entry</p><h2 id="entry-title">{text}</h2></header>')
             elif level == 2:
-                section_class = ' class="machine-condition"' if "machine" in heading.group(2).lower() else ""
+                if "sources" in heading.group(2).lower():
+                    section_class = ' class="sources-section"'
+                elif "machine" in heading.group(2).lower():
+                    section_class = ' class="machine-condition"'
+                else:
+                    section_class = ""
                 blocks.append(f"<section{section_class}><h3>{text}</h3>")
             else:
                 blocks.append(f"<h{level + 1}>{text}</h{level + 1}>")
@@ -103,7 +108,24 @@ def markdown_to_html(markdown: str) -> str:
         rendered.append(block)
     if open_section:
         rendered.append("</section>")
-    return "\n".join(rendered)
+    
+    # Post-process: Convert source lists to styled source grid
+    result = "\n".join(rendered)
+    result = result.replace(
+        '<section class="sources-section"><h3>Sources</h3>',
+        '<section class="sources-section"><h3>Sources</h3><div class="sources-grid">'
+    )
+    # Replace closing </section> for sources with special closing
+    result = result.replace(
+        '</section>\n<section',
+        '</div>\n</section>\n<section'
+    )
+    result = result.replace(
+        '</section>\n</section>',
+        '</div>\n</section>'
+    )
+    
+    return result
 
 
 def title_from_markdown(markdown: str, fallback: str) -> str:
