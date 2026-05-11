@@ -39,6 +39,9 @@ env/
 # Logs directory
 logs/
 
+# Build / deploy output
+dist/
+
 # Validation reports (optional - comment out if you want to keep them)
 # validation-report.json
 # all-entries-report.json
