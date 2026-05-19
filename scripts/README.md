@@ -6,7 +6,7 @@ This folder contains the first production-shaped pipeline for **The Witness**.
 
 - `collect_sources.py` — fetches RSS/Atom feeds from `sources/source_config.json`, deduplicates items, and writes `sources/YYYY/MM/YYYY-MM-DD.json`.
 - `generate_entry.py` — reads the source JSON and writes `diary/YYYY/MM/YYYY-MM-DD.md`.
-  - Default provider is Gemini (`AI_PROVIDER=gemini`).
+  - Default provider is OpenRouter (`AI_PROVIDER=openrouter`).
   - OpenAI remains available with `AI_PROVIDER=openai`.
   - By default, it runs a two-pass process: first draft, then editorial review/rewrite.
   - Use `--skip-review` to disable the second pass.
@@ -58,14 +58,14 @@ See `docs/validation-guide.md` for detailed documentation.
 python3 scripts/run_daily.py --date 2026-05-05 --dry-run --force
 ```
 
-## Live generation with Gemini
+## Live generation with OpenRouter
 
 ```bash
 cp .env.example .env
-# Add GEMINI_API_KEY to .env, then export it in your shell.
-export AI_PROVIDER="gemini"
-export GEMINI_API_KEY="..."
-export GEMINI_MODEL="gemini-2.5-flash-lite"
+# Add OPENROUTER_API_KEY to .env, then export it in your shell.
+export AI_PROVIDER="openrouter"
+export OPENROUTER_API_KEY="..."
+export OPENROUTER_MODEL="openai/gpt-4o-mini"
 python3 scripts/run_daily.py --date 2026-05-05 --force
 ```
 

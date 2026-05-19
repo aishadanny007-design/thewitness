@@ -40,11 +40,11 @@ This guide covers all automation options for The Witness diary pipeline, from lo
 2. **Add Secrets to GitHub**:
    - Go to: `Settings` → `Secrets and variables` → `Actions`
    - Add these secrets:
-     - `GEMINI_API_KEY` (if using Gemini)
+     - `OPENROUTER_API_KEY` (if using OpenRouter)
      - `OPENAI_API_KEY` (if using OpenAI)
-     - `GEMINI_MODEL` (optional, defaults to `gemini-2.5-flash-lite`)
+     - `OPENROUTER_MODEL` (optional, defaults to `openai/gpt-4o-mini`)
      - `OPENAI_MODEL` (optional, defaults to `gpt-5.1`)
-     - `AI_PROVIDER` (optional, defaults to `gemini`)
+     - `AI_PROVIDER` (optional, defaults to `openrouter`)
 
 3. **Trigger Options**:
    - **Automatic**: Runs daily at 23:00 PKT (18:00 UTC)
@@ -365,7 +365,7 @@ python3 scripts/entry_review.py diary/2026/05/2026-05-05.md --strict
 ```bash
 # Test API connection
 python3 -c "import openai; print('OpenAI OK')"
-python3 -c "import google.generativeai; print('Gemini OK')"
+python3 -c "import openai; print('OpenAI SDK OK')"
 ```
 
 ### View GitHub Actions Logs

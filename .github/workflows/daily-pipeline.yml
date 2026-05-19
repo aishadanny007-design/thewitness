@@ -67,9 +67,9 @@ jobs:
     
     - name: Run daily pipeline
       env:
-        AI_PROVIDER: ${{ secrets.AI_PROVIDER || 'gemini' }}
-        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        GEMINI_MODEL: ${{ secrets.GEMINI_MODEL || 'gemini-2.5-flash-lite' }}
+        AI_PROVIDER: ${{ secrets.AI_PROVIDER || 'openrouter' }}
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        OPENROUTER_MODEL: ${{ secrets.OPENROUTER_MODEL || 'openai/gpt-4o-mini' }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         OPENAI_MODEL: ${{ secrets.OPENAI_MODEL || 'gpt-5.1' }}
       run: |

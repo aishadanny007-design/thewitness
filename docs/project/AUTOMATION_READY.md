@@ -50,8 +50,8 @@ I've created a **complete automation system** for The Witness with multiple opti
 
 1. **Add Secrets to GitHub**:
    - Go to `Settings` → `Secrets and variables` → `Actions`
-   - Add: `GEMINI_API_KEY` (or `OPENAI_API_KEY`)
-   - Optional: `GEMINI_MODEL`, `OPENAI_MODEL`, `AI_PROVIDER`
+   - Add: `OPENROUTER_API_KEY` (or `OPENAI_API_KEY`)
+   - Optional: `OPENROUTER_MODEL`, `OPENAI_MODEL`, `AI_PROVIDER`
 
 2. **Push to Main**:
    ```bash

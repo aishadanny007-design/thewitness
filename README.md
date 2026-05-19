@@ -57,7 +57,7 @@ scripts/
 The Witness supports multiple automation options:
 
 ### Quick Start (GitHub Actions - Recommended)
-1. Add API keys to GitHub Secrets (`GEMINI_API_KEY` or `OPENAI_API_KEY`)
+1. Add API keys to GitHub Secrets (`OPENROUTER_API_KEY` or `OPENAI_API_KEY`)
 2. Push to main/master
 3. Daily generation runs automatically at 23:00 PKT
 

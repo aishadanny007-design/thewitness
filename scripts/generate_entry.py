@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate a daily diary entry from collected source metadata.
 
-By default this uses Gemini if GEMINI_API_KEY is set. OpenAI remains available as
+By default this uses OpenRouter. OpenAI remains available as
 an optional fallback. Without credentials, it writes a safe local draft so the
 pipeline can be tested without network or paid usage.
 """
@@ -23,9 +23,9 @@ ROOT = Path(__file__).resolve().parents[1]
 PROMPT_PATH = ROOT / "prompts" / "daily-entry.md"
 REVIEW_PROMPT_PATH = ROOT / "prompts" / "editorial-review.md"
 OPENAI_URL = "https://api.openai.com/v1/responses"
-GEMINI_URL_TEMPLATE = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-DEFAULT_PROVIDER = "gemini"
-DEFAULT_GEMINI_MODEL = "gemini-2.5-flash-lite"
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+DEFAULT_PROVIDER = "openrouter"
+DEFAULT_OPENROUTER_MODEL = "openai/gpt-4o-mini"
 DEFAULT_OPENAI_MODEL = "gpt-5.1"
 REQUIRED_SECTIONS = [
     "The mood of the world",
@@ -184,41 +184,36 @@ def render_review_prompt(date: str, source_notes: str, draft_entry: str) -> str:
 
 
 
-def call_gemini(prompt: str, model: str, api_key: str, max_output_tokens: int) -> str:
-    """Call Gemini API with exponential backoff retry on rate limits/failures."""
+def call_openrouter(prompt: str, model: str, api_key: str, max_output_tokens: int) -> str:
+    """Call OpenRouter Chat Completions API with retry on transient failures."""
     payload = {
-        "systemInstruction": {
-            "parts": [
-                {
-                    "text": (
-                        "You are the editorial engine for The Witness. Follow the user's prompt exactly. "
-                        "Return only the finished Markdown diary entry. Do not include prefatory commentary."
-                    )
-                }
-            ]
-        },
-        "contents": [
+        "model": model,
+        "messages": [
             {
-                "role": "user",
-                "parts": [{"text": prompt}],
-            }
+                "role": "system",
+                "content": (
+                    "You are the editorial engine for The Witness. Follow the user's prompt exactly. "
+                    "Return only the finished Markdown diary entry. Do not include prefatory commentary."
+                ),
+            },
+            {"role": "user", "content": prompt},
         ],
-        "generationConfig": {
-            "temperature": 0.75,
-            "topP": 0.9,
-            "maxOutputTokens": max_output_tokens,
-        },
+        "temperature": 0.75,
+        "top_p": 0.9,
+        "max_tokens": max_output_tokens,
     }
     
     def make_request():
         data = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(
-            GEMINI_URL_TEMPLATE.format(model=model),
+            OPENROUTER_URL,
             data=data,
             method="POST",
             headers={
-                "x-goog-api-key": api_key,
+                "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
+                "HTTP-Referer": "https://github.com/dan/diaryjournal",
+                "X-Title": "The Witness",
             },
         )
         with urllib.request.urlopen(req, timeout=120) as resp:
@@ -227,20 +222,12 @@ def call_gemini(prompt: str, model: str, api_key: str, max_output_tokens: int) -
     # Retry with exponential backoff for transient failures
     response = retry_with_backoff(make_request, max_retries=MAX_RETRIES)
 
-    chunks: list[str] = []
-    for candidate in response.get("candidates", []):
-        content = candidate.get("content", {})
-        for part in content.get("parts", []):
-            text = part.get("text")
-            if isinstance(text, str) and text:
-                chunks.append(text)
-    if chunks:
-        return "\n".join(chunks).strip() + "\n"
-
-    block_reason = response.get("promptFeedback", {}).get("blockReason")
-    if block_reason:
-        raise RuntimeError(f"Gemini response was blocked: {block_reason}")
-    raise RuntimeError("Gemini response did not contain output text")
+    choices = response.get("choices", [])
+    if choices:
+        content = (choices[0].get("message", {}) or {}).get("content")
+        if isinstance(content, str) and content.strip():
+            return content.strip() + "\n"
+    raise RuntimeError("OpenRouter response did not contain output text")
 
 
 def call_openai(prompt: str, model: str, api_key: str, max_output_tokens: int) -> str:
@@ -365,8 +352,8 @@ def main() -> int:
     parser.add_argument("--date", default=datetime.now().date().isoformat(), help="Entry date YYYY-MM-DD; pass explicitly from run_daily.py for Asia/Karachi default")
     parser.add_argument("--source", type=Path, default=None)
     parser.add_argument("--output", type=Path, default=None)
-    parser.add_argument("--provider", choices=("gemini", "openai", "local"), default=os.getenv("AI_PROVIDER", DEFAULT_PROVIDER))
-    parser.add_argument("--model", default=None, help="Provider model name; defaults to GEMINI_MODEL or OPENAI_MODEL")
+    parser.add_argument("--provider", choices=("openrouter", "openai", "local"), default=os.getenv("AI_PROVIDER", DEFAULT_PROVIDER))
+    parser.add_argument("--model", default=None, help="Provider model name; defaults to OPENROUTER_MODEL or OPENAI_MODEL")
     parser.add_argument("--max-sources", type=int, default=36)
     parser.add_argument("--max-output-tokens", type=int, default=4500)
     parser.add_argument("--review-max-output-tokens", type=int, default=5200)
@@ -388,14 +375,14 @@ def main() -> int:
 
     provider = "local" if args.dry_run else (args.provider or DEFAULT_PROVIDER).strip().lower()
 
-    if provider == "gemini":
-        api_key = (os.getenv("GEMINI_API_KEY") or "").strip()
+    if provider == "openrouter":
+        api_key = (os.getenv("OPENROUTER_API_KEY") or "").strip()
         if not api_key:
-            print("GEMINI_API_KEY is not set. Export GEMINI_API_KEY or use --dry-run.", file=sys.stderr)
+            print("OPENROUTER_API_KEY is not set. Export OPENROUTER_API_KEY or use --dry-run.", file=sys.stderr)
             return 5
-        model = str(args.model or os.getenv("GEMINI_MODEL") or DEFAULT_GEMINI_MODEL).strip()
-        print(f"Generating with Gemini model: {model}")
-        markdown = call_gemini(prompt, model, api_key, args.max_output_tokens)
+        model = str(args.model or os.getenv("OPENROUTER_MODEL") or DEFAULT_OPENROUTER_MODEL).strip()
+        print(f"Generating with OpenRouter model: {model}")
+        markdown = call_openrouter(prompt, model, api_key, args.max_output_tokens)
         if not args.skip_review:
             draft_markdown = markdown
             if args.keep_draft:
@@ -403,12 +390,12 @@ def main() -> int:
                 draft_path.parent.mkdir(parents=True, exist_ok=True)
                 draft_path.write_text(draft_markdown, encoding="utf-8")
                 print(f"Wrote first-pass draft to {draft_path}")
-            print("Running editorial review/rewrite pass with Gemini")
-            markdown = call_gemini(render_review_prompt(args.date, source_notes, draft_markdown), model, api_key, args.review_max_output_tokens)
+            print("Running editorial review/rewrite pass with OpenRouter")
+            markdown = call_openrouter(render_review_prompt(args.date, source_notes, draft_markdown), model, api_key, args.review_max_output_tokens)
     elif provider == "openai":
         api_key = (os.getenv("OPENAI_API_KEY") or "").strip()
         if not api_key:
-            print("OPENAI_API_KEY is not set. Export OPENAI_API_KEY, set AI_PROVIDER=gemini, or use --dry-run.", file=sys.stderr)
+            print("OPENAI_API_KEY is not set. Export OPENAI_API_KEY, set AI_PROVIDER=openrouter, or use --dry-run.", file=sys.stderr)
             return 5
         model = str(args.model or os.getenv("OPENAI_MODEL") or DEFAULT_OPENAI_MODEL).strip()
         print(f"Generating with OpenAI model: {model}")
@@ -425,7 +412,7 @@ def main() -> int:
     elif provider == "local":
         markdown = local_draft(args.date, doc, args.max_sources)
     else:
-        print(f"Unsupported provider: {provider}. Use gemini, openai, or local.", file=sys.stderr)
+        print(f"Unsupported provider: {provider}. Use openrouter, openai, or local.", file=sys.stderr)
         return 5
 
     errors = validate_entry(markdown)
