@@ -24,12 +24,13 @@ jobs:
           python-version: "3.12"
       - name: Run daily pipeline
         env:
-          AI_PROVIDER: ${{ vars.AI_PROVIDER || 'openrouter' }}
+          AI_PROVIDER: openrouter
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL || 'google/gemini-2.5-flash-lite' }}
+          OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL || 'openrouter/owl-alpha' }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-5.1' }}
         run: |
+          export AI_PROVIDER="${AI_PROVIDER:-openrouter}"
           DATE_INPUT="${{ inputs.date }}"
           if [ -n "$DATE_INPUT" ]; then
             python scripts/run_daily.py --date "$DATE_INPUT" --force
