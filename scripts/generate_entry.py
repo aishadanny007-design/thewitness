@@ -25,7 +25,7 @@ REVIEW_PROMPT_PATH = ROOT / "prompts" / "editorial-review.md"
 OPENAI_URL = "https://api.openai.com/v1/responses"
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 DEFAULT_PROVIDER = "openrouter"
-DEFAULT_OPENROUTER_MODEL = "google/gemini-2.5-flash-lite"
+DEFAULT_OPENROUTER_MODEL = "openrouter/owl-alpha"
 DEFAULT_OPENAI_MODEL = "gpt-5.1"
 REQUIRED_SECTIONS = [
     "The mood of the world",
